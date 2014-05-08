@@ -457,7 +457,9 @@ endfunction " }}}
 function! eclim#project#util#ProjectStatusLine() " {{{
   " Includes status information for the current file to VIM status
 
-  let project = eclim#project#util#GetProject(expand('%:p'))
+  " don't ever display errors since this is called from the user's status
+  " line.
+  silent! let project = eclim#project#util#GetProject(expand('%:p'))
   if !empty(project)
     let status = g:EclimProjectStatusLine
     while status =~ '\${\w\+}'
@@ -478,6 +480,7 @@ function! eclim#project#util#ProjectStatusLine() " {{{
     endwhile
     return status
   endif
+  return ''
 endfunction " }}}
 
 function! eclim#project#util#ProjectOpen(name) " {{{
