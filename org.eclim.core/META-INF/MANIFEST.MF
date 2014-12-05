@@ -35,4 +35,6 @@ Require-Bundle: org.eclim,
   org.eclipse.ui,
   org.eclipse.ui.ide,
   org.eclipse.debug.core,
-  org.eclipse.debug.ui
+  org.eclipse.debug.ui,
+  org.eclipse.ui.workbench,
+  org.eclipse.m2e.core.ui
