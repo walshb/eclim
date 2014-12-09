@@ -16,17 +16,18 @@
  */
 package org.eclim.plugin.core.command.project;
 
-import java.net.URI;
-
 import org.eclim.annotation.Command;
-
 import org.eclim.command.CommandLine;
 import org.eclim.command.Options;
-
+import org.eclim.logging.Logger;
 import org.eclim.plugin.core.command.AbstractCommand;
-
+import org.eclim.plugin.core.util.ProjectUtils;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.ResourcesPlugin;
+
+import java.net.URI;
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * Gets the project that the file at the supplied absolute path belongs to.
@@ -41,23 +42,19 @@ import org.eclipse.core.resources.ResourcesPlugin;
 public class ProjectByResource
   extends AbstractCommand
 {
+  private static final Logger logger = Logger.getLogger(ProjectByResource.class);
+
   /**
    * {@inheritDoc}
    */
   public Object execute(CommandLine commandLine)
     throws Exception
   {
-    String file = commandLine.getValue(Options.FILE_OPTION);
+    String path = commandLine.getValue(Options.FILE_OPTION);
 
-    // can't use URLEncoder on the full file since the colon in 'C:' gets
-    // encoded as well.
-    //URI uri = new URI("file://" + URLEncoder.encode(file, "UTF-8"));
-    URI uri = new URI("file://" + file.replaceAll(" ", "%20"));
-    IFile[] files = ResourcesPlugin
-      .getWorkspace().getRoot().findFilesForLocationURI(uri);
-
-    if (files.length > 0){
-      return files[0].getProject().getName();
+    IFile file = ProjectUtils.findFileInDeepestProject(path);
+    if (file != null) {
+      return file.getProject().getName();
     }
     return null;
   }

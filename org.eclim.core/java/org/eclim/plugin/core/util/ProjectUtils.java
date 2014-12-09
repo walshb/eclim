@@ -19,9 +19,12 @@ package org.eclim.plugin.core.util;
 import java.io.File;
 
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Comparator;
 
 import org.eclim.Services;
 
+import org.eclim.logging.Logger;
 import org.eclim.plugin.core.preference.Preferences;
 
 import org.eclim.plugin.core.project.ProjectManagement;
@@ -51,6 +54,8 @@ import org.eclipse.jface.text.IDocument;
  */
 public class ProjectUtils
 {
+  private static final Logger logger = Logger.getLogger(ProjectUtils.class);
+
   /**
    * Gets the path on disk to the directory of the supplied project.
    *
@@ -76,6 +81,32 @@ public class ProjectUtils
     return path != null ? path.toOSString().replace('\\', '/') : null;
   }
 
+  public static IFile findFileInDeepestProject(String path)
+    throws Exception
+  {
+    // can't use URLEncoder on the full file since the colon in 'C:' gets
+    // encoded as well.
+    //URI uri = new URI("file://" + URLEncoder.encode(file, "UTF-8"));
+    URI uri = new URI("file://" + path.replaceAll(" ", "%20"));
+    IFile[] files = ResourcesPlugin
+      .getWorkspace().getRoot().findFilesForLocationURI(uri);
+    if (files.length == 0) {
+        return null;
+    }
+    // shortest fullPath is the deepest project -- we want this one.
+    Arrays.sort(files, new Comparator<IFile>() {
+      @Override
+      public int compare(IFile a, IFile b) {
+        return Integer.compare(a.getProjectRelativePath().toOSString().length(),
+                b.getProjectRelativePath().toOSString().length());
+      }
+    });
+    for (IFile file: files) {
+        logger.debug("path {} resolved as {} in project {}", path, file.getProjectRelativePath(), file.getProject());
+    }
+    return files[0];
+  }
+
   /**
    * Gets the project relative path of the supplied absolute file path.
    *
@@ -85,15 +116,9 @@ public class ProjectUtils
   public static String getProjectRelativePath(String path)
     throws Exception
   {
-    // can't use URLEncoder on the full file since the colon in 'C:' gets
-    // encoded as well.
-    //URI uri = new URI("file://" + URLEncoder.encode(file, "UTF-8"));
-    URI uri = new URI("file://" + path.replaceAll(" ", "%20"));
-    IFile[] files = ResourcesPlugin
-      .getWorkspace().getRoot().findFilesForLocationURI(uri);
-
-    if (files.length > 0){
-      return files[0].getProjectRelativePath().toString();
+    IFile file = findFileInDeepestProject(path);
+    if (file != null){
+      return file.getProjectRelativePath().toString();
     }
     return null;
   }
