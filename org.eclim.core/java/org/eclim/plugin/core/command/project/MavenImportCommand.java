@@ -16,39 +16,45 @@
  */
 package org.eclim.plugin.core.command.project;
 
-import java.io.File;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-
-import java.util.ArrayList;
-import java.util.Collections;
-
 import org.eclim.Services;
-
 import org.eclim.annotation.Command;
-
 import org.eclim.command.CommandLine;
 import org.eclim.command.Options;
-
+import org.eclim.eclipse.EclimPlugin;
+import org.eclim.logging.Logger;
 import org.eclim.plugin.core.command.AbstractCommand;
-
-import org.eclim.plugin.core.util.ProjectUtils;
-
-import org.eclipse.core.resources.IProject;
-
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.jface.wizard.WizardDialog;
+import org.eclipse.m2e.core.ui.internal.wizards.MavenImportWizardPage;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IImportWizard;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.wizards.IWizardDescriptor;
+import org.eclipse.ui.wizards.IWizardRegistry;
+
+import java.io.File;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+/*
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.wizards.IWizardRegistry;
-import org.eclipse.ui.wizards.IWizardDescriptor;
-import org.eclipse.ui.IImportWizard;
-import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.m2e.core.MavenPlugin;
+import org.eclipse.m2e.core.embedder.MavenModelManager;
+import org.eclipse.m2e.core.project.AbstractProjectScanner;
+import org.eclipse.m2e.core.project.LocalProjectScanner;
+import org.eclipse.m2e.core.project.MavenProjectInfo;
+import org.eclipse.m2e.core.project.ProjectImportConfiguration;
+import org.eclipse.m2e.core.ui.internal.wizards.ImportMavenProjectsJob;
+*/
 
 /**
  * Command to import a project from a folder.
@@ -59,6 +65,20 @@ import org.eclipse.jface.viewers.StructuredSelection;
 public class MavenImportCommand
   extends AbstractCommand
 {
+  private static final Logger logger = Logger.getLogger(MavenImportCommand.class);
+
+  /*
+  private static class PomFile extends org.eclipse.core.internal.resources.File {
+      public PomFile(IPath path, Workspace workspace) {
+      super(path, workspace);
+    }
+
+    public IPath getLocation() {
+        return getLocalManager().locationFor(this);
+    }
+  }
+  */
+
   /**
    * {@inheritDoc}
    */
@@ -87,12 +107,53 @@ public class MavenImportCommand
     IImportWizard wizard = (IImportWizard)wizardDescriptor.createWizard();
 
     IPath path = Path.fromOSString(folder);
-    IFile file = ResourcesPlugin.getWorkspace().getRoot().getFile(path);
+    //IFile file = ResourcesPlugin.getWorkspace().getRoot().getFile(path);
+    //IFile file = new PomFile(path, ResourcesPlugin.getWorkspace());
+    //IStructuredSelection selection = new StructuredSelection(new Object[]{file});
 
-    wizard.init(PlatformUI.getWorkbench(), new StructuredSelection(new Object[]{file}));
+    //wizard.init(PlatformUI.getWorkbench(), selection);
+    List<String> locations = new ArrayList<String>();
+    locations.add(folder);
 
-    // hacky, but I want to re-use the eclipse logic as much as possible.
-    //MavenImportWizard wizard = new MavenImportWizard(new ProjectImportConfiguration(), Collections.singletonList(dotproject.getAbsolutePath()));
+    Field field = wizard.getClass().getDeclaredField("locations");
+    field.setAccessible(true);
+    field.set(wizard, locations);
+
+    Shell shell = EclimPlugin.getShell();
+    WizardDialog wizardDialog = new WizardDialog(shell, wizard);
+    wizardDialog.create();
+
+    //wizard.addPages();
+
+    //Thread.sleep(5000);
+
+    MavenImportWizardPage page = (MavenImportWizardPage)wizard.getPages()[0];
+
+    /*
+    IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
+    File root = workspaceRoot.getLocation().toFile();
+    List<String> locations = new ArrayList<String>();
+    locations.add(folder);
+    boolean basedirRenameRequired = false;
+    MavenModelManager modelManager = MavenPlugin.getMavenModelManager();
+    AbstractProjectScanner<MavenProjectInfo> projectScanner = new LocalProjectScanner(root, locations, basedirRenameRequired, modelManager);
+    IProgressMonitor monitor = new NullProgressMonitor();
+    projectScanner.run(monitor);
+    List<MavenProjectInfo> projects = projectScanner.getProjects();
+
+    ProjectImportConfiguration importConfiguration = new ProjectImportConfiguration();
+    List<IWorkingSet> workingSets = new ArrayList<IWorkingSet>();
+    ImportMavenProjectsJob job = new ImportMavenProjectsJob(projects, workingSets, importConfiguration);
+    job.setRule(MavenPlugin.getProjectConfigurationManager().getRule());
+    job.schedule();
+    */
+
+    /*
+    page.setShowLocation(false);
+    page.createControl(wizard.getContainer());
+    page.scanProjects();
+    page.setPageComplete(true);
+    */
 
     wizard.performFinish();
 

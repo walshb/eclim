@@ -16,13 +16,10 @@
  */
 package org.eclim.plugin.core.command.project;
 
-import java.net.URI;
-
 import org.eclim.annotation.Command;
-
 import org.eclim.command.CommandLine;
 import org.eclim.command.Options;
-
+import org.eclim.logging.Logger;
 import org.eclim.plugin.core.command.AbstractCommand;
 
 import org.eclim.plugin.core.util.ProjectUtils;
@@ -30,6 +27,10 @@ import org.eclim.plugin.core.util.ProjectUtils;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
+
+import java.net.URI;
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * Gets the project that the file at the supplied absolute path belongs to.
