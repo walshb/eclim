@@ -44,40 +44,16 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/*
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.m2e.core.MavenPlugin;
-import org.eclipse.m2e.core.embedder.MavenModelManager;
-import org.eclipse.m2e.core.project.AbstractProjectScanner;
-import org.eclipse.m2e.core.project.LocalProjectScanner;
-import org.eclipse.m2e.core.project.MavenProjectInfo;
-import org.eclipse.m2e.core.project.ProjectImportConfiguration;
-import org.eclipse.m2e.core.ui.internal.wizards.ImportMavenProjectsJob;
-*/
-
 /**
  * Command to import a project from a folder.
  *
- * @author Eric Van Dewoestine
+ * @author Ben Walsh
  */
-@Command(name = "maven_import", options = "REQUIRED f pom ARG")
+@Command(name = "maven_import", options = "REQUIRED f folder ARG")
 public class MavenImportCommand
   extends AbstractCommand
 {
   private static final Logger logger = Logger.getLogger(MavenImportCommand.class);
-
-  /*
-  private static class PomFile extends org.eclipse.core.internal.resources.File {
-      public PomFile(IPath path, Workspace workspace) {
-      super(path, workspace);
-    }
-
-    public IPath getLocation() {
-        return getLocalManager().locationFor(this);
-    }
-  }
-  */
 
   /**
    * {@inheritDoc}
@@ -94,9 +70,9 @@ public class MavenImportCommand
       return Services.getMessage("project.directory.missing", folder);
     }
 
-    File dotproject = new File(folder);
-    if (!dotproject.exists()){
-      return Services.getMessage("project.dotproject.missing", folder);
+    File pom = new File(folder + "/pom.xml");
+    if (!pom.exists()){
+      return Services.getMessage("project.pom.missing", folder);
     }
 
     IWizardRegistry wizardRegistry = PlatformUI.getWorkbench().getImportWizardRegistry();
@@ -106,12 +82,6 @@ public class MavenImportCommand
     IWizardDescriptor wizardDescriptor = wizardRegistry.findWizard(wizardId);
     IImportWizard wizard = (IImportWizard)wizardDescriptor.createWizard();
 
-    IPath path = Path.fromOSString(folder);
-    //IFile file = ResourcesPlugin.getWorkspace().getRoot().getFile(path);
-    //IFile file = new PomFile(path, ResourcesPlugin.getWorkspace());
-    //IStructuredSelection selection = new StructuredSelection(new Object[]{file});
-
-    //wizard.init(PlatformUI.getWorkbench(), selection);
     List<String> locations = new ArrayList<String>();
     locations.add(folder);
 
@@ -123,40 +93,8 @@ public class MavenImportCommand
     WizardDialog wizardDialog = new WizardDialog(shell, wizard);
     wizardDialog.create();
 
-    //wizard.addPages();
-
-    //Thread.sleep(5000);
-
-    MavenImportWizardPage page = (MavenImportWizardPage)wizard.getPages()[0];
-
-    /*
-    IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
-    File root = workspaceRoot.getLocation().toFile();
-    List<String> locations = new ArrayList<String>();
-    locations.add(folder);
-    boolean basedirRenameRequired = false;
-    MavenModelManager modelManager = MavenPlugin.getMavenModelManager();
-    AbstractProjectScanner<MavenProjectInfo> projectScanner = new LocalProjectScanner(root, locations, basedirRenameRequired, modelManager);
-    IProgressMonitor monitor = new NullProgressMonitor();
-    projectScanner.run(monitor);
-    List<MavenProjectInfo> projects = projectScanner.getProjects();
-
-    ProjectImportConfiguration importConfiguration = new ProjectImportConfiguration();
-    List<IWorkingSet> workingSets = new ArrayList<IWorkingSet>();
-    ImportMavenProjectsJob job = new ImportMavenProjectsJob(projects, workingSets, importConfiguration);
-    job.setRule(MavenPlugin.getProjectConfigurationManager().getRule());
-    job.schedule();
-    */
-
-    /*
-    page.setShowLocation(false);
-    page.createControl(wizard.getContainer());
-    page.scanProjects();
-    page.setPageComplete(true);
-    */
-
     wizard.performFinish();
 
-    return Services.getMessage("project.imported", "something");
+    return Services.getMessage("project.imported", folder);
   }
 }
