@@ -91,20 +91,24 @@ public class ProjectUtils
     IFile[] files = ResourcesPlugin
       .getWorkspace().getRoot().findFilesForLocationURI(uri);
     if (files.length == 0) {
-        return null;
+      return null;
     }
-    // shortest fullPath is the deepest project -- we want this one.
-    Arrays.sort(files, new Comparator<IFile>() {
-      @Override
-      public int compare(IFile a, IFile b) {
-        return Integer.compare(a.getProjectRelativePath().toOSString().length(),
-                b.getProjectRelativePath().toOSString().length());
+
+    // shortest relativePath is the deepest project -- we want this one.
+    int shortestIdx = -1;
+    int shortestLen = Integer.MAX_VALUE;
+    for (int i = 0; i < files.length; i++) {
+      int len = files[i].getProjectRelativePath().toOSString().length();
+      if (len < shortestLen) {
+        shortestLen = len;
+        shortestIdx = i;
       }
-    });
-    for (IFile file: files) {
-        logger.debug("path {} resolved as {} in project {}", path, file.getProjectRelativePath(), file.getProject());
     }
-    return files[0];
+
+    logger.debug("path {} resolved as {} in project {}", path,
+      files[shortestIdx].getProjectRelativePath(), files[shortestIdx].getProject());
+
+    return files[shortestIdx];
   }
 
   /**
